@@ -17,7 +17,7 @@
             <span slot="title">首页</span>
           </el-menu-item>
 
-          <el-submenu index="1">
+          <!-- <el-submenu index="1">
             <template slot="title">
               <i class="el-icon-location"></i>
               <span>系统设置</span>
@@ -43,6 +43,23 @@
               <el-menu-item index="/seckill">秒杀活动</el-menu-item>
             </el-menu-item-group>
           </el-submenu>
+          </el-menu>-->
+
+          <div v-for="item in info.menus" :key="item.id">
+            <!-- 这个是目录 -->
+            <el-submenu v-if="item.children" :index="item.id+''">
+              <template slot="title">
+                <i :class="item.icon"></i>
+                <span>{{item.title}}</span>
+              </template>
+              <el-menu-item-group>
+                <el-menu-item :index="i.url" v-for="i in item.children" :key="i.id">{{i.title}}</el-menu-item>
+              </el-menu-item-group>
+            </el-submenu>
+
+            <!-- 这个直接是菜单 -->
+            <el-menu-item v-else :index="item.url">{{item.title}}</el-menu-item>
+          </div>
         </el-menu>
       </el-aside>
       <el-container>
@@ -66,7 +83,7 @@
   </div>
 </template>
 <script>
-import {mapGetters,mapActions} from "vuex"
+import { mapGetters, mapActions } from "vuex";
 
 export default {
   computed: {
@@ -84,7 +101,7 @@ export default {
     },
   },
   mounted() {
-    console.log(store);
+    // console.log(store);
   },
 };
 </script>

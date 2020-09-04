@@ -31,8 +31,8 @@ import {
   
   const actions = {
     //请求
-    reqListAction(context) {
-      reqgoodsList({
+    reqListAction(context,parmas) {
+      reqgoodsList(parmas?parmas:{
         page: context.state.page,
         size: context.state.size
       }).then(res => {

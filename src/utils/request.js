@@ -1,13 +1,35 @@
 import axios from "axios"
 import qs from "qs"
-
+import store from "../store"
+import router from "../router"
+import { warningAlert } from "./alert"
 let baseUrl = "/api";
+
+
+//请求拦截
+axios.interceptors.request.use(config => {
+  //登录
+  if (config.url == baseUrl + "/api/userlogin") {
+    return config;
+  }
+
+  config.headers.authorization = store.state.user.info.token;
+  return config;
+})
 
 //响应拦截
 axios.interceptors.response.use(res => {
   console.group("====本次请求的地址是：" + res.config.url + "======");
   console.log(res);
   console.groupEnd()
+  if (res.data.msg === "登录已过期或访问权限受限") {
+    warningAlert("登录已过期或访问权限受限")
+    //清空info
+    store.dispatch("user/changeInfoAction", {})
+    //跳转到登录 
+    router.push("/login")
+  }
+  return res;
   return res;
 })
 
@@ -164,7 +186,7 @@ export const reqUserNum = () => {
 }
 
 
-/*-------------------------------------------分类------------------------- */
+/*-------------------------------------------商品分类------------------------- */
 
 //分类添加
 export const reqCateAdd = (form) => {
@@ -397,3 +419,76 @@ export const reqgoodsNum = () => {
   })
 }
 /*---------------------商品结束----------------------------------*/
+/*-----------------------------会员列表--------------------------- */
+//会员列表
+export const reqmemberList = (params) => {
+  return axios({
+    url: baseUrl + "/api/memberlist",
+    method: "get",
+    params
+  })
+}
+
+//会员详情一条数据获取
+export const reqmemberDetail = (params) => {
+  return axios({
+    url: baseUrl + "/api/memberinfo",
+    method: "get",
+    params: params
+  })
+}
+//会员修改
+export const reqmemberUpdate = (form) => {
+  return axios({
+    url: baseUrl + "/api/memberedit",
+    method: "post",
+    data: qs.stringify(form)
+  })
+}
+/*-------------------------------限时秒杀-------------------- */
+
+//限时添加
+export const reqseckAdd = (form) => {
+  //{z:1,a:2,v:4,d:file}
+  return axios({
+    url: baseUrl + "/api/seckadd",
+    method: "post",
+    data: qs.stringify(form)
+  })
+}
+
+//限时列表
+export const reqseckList = (params) => {
+  return axios({
+    url: baseUrl + "/api/secklist",
+    method: "get",
+    params
+  })
+}
+
+//限时详情
+export const reqseckDetail = (params) => {
+  return axios({
+    url: baseUrl + "/api/seckinfo",
+    method: "get",
+    params: params
+  })
+}
+
+//限时修改
+export const reqseckUpdate = (form) => {
+  return axios({
+    url: baseUrl + "/api/seckedit",
+    method: "post",
+    data: form
+  })
+}
+
+//限时删除 params={id:1}
+export const reqseckDel = (params) => {
+  return axios({
+    url: baseUrl + "/api/seckdelete",
+    method: "post",
+    data: qs.stringify(params)
+  })
+}

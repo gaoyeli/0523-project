@@ -1,4 +1,4 @@
-import { reqUserList,reqUserNum } from "../../utils/request"
+import { reqUserList, reqUserNum } from "../../utils/request"
 const state = {
     //管理员列表
     list: [],
@@ -55,7 +55,7 @@ const actions = {
     changePageAction(context, page) {
         context.commit("changePage", page)
         //重新请求列表数据
-        context.dispatch("reqListAction")
+        context.dispatch("reqRoleAction")
     }
 
 }

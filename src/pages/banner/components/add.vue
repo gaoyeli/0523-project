@@ -1,7 +1,7 @@
 <template>
   <div>
-    <el-dialog :title="info.title" :visible.sync="info.isShow" @close="close">
-      <el-form :model="form">
+    <el-dialog :title="info.title" :visible.sync="info.isShow" @close="close('form')">
+      <el-form :model="form" :rules="rules" ref="form">
         <!-- 
         <el-form-item label="上级分类" :label-width="width">
           <el-select v-model="form.pid" placeholder="请选择活动区域">
@@ -11,10 +11,10 @@
           </el-select>
         </el-form-item>-->
 
-        <el-form-item label="标题" :label-width="width">
+        <el-form-item label="标题" :label-width="width" prop="title">
           <el-input v-model="form.title" autocomplete="off"></el-input>
         </el-form-item>
-        <el-form-item label="图片" :label-width="width">
+        <el-form-item label="图片" :label-width="width" prop="img">
           <!-- 原生的上传文件 -->
           <div class="upload-box">
             <h3 class="upload-add">+</h3>
@@ -39,8 +39,8 @@
       </el-form>
       <div slot="footer" class="dialog-footer">
         <el-button @click="cancel">取 消</el-button>
-        <el-button type="primary" @click="add" v-if="info.isAdd">添 加</el-button>
-        <el-button type="primary" @click="update" v-else>修 改</el-button>
+        <el-button type="primary" @click="add('form')" v-if="info.isAdd">添 加</el-button>
+        <el-button type="primary" @click="update('form')" v-else>修 改</el-button>
       </div>
     </el-dialog>
   </div>
@@ -71,6 +71,10 @@ export default {
         img: null,
         status: 1,
       },
+      rules: {
+        title: [{ required: true, message: "请输入标题", trigger: "blur" }],
+        img: [{ required: true, message: "请添加图片", trigger: "blur" }],
+      },
     };
   },
   methods: {
@@ -91,26 +95,34 @@ export default {
       this.imgUrl = "";
     },
     //弹框关闭完成
-    close() {
+    close(form) {
       // 如果是编辑，取消了，就要清空
       if (!this.info.isAdd) {
         this.empty();
       }
+      this.$refs[form].resetFields();
     },
     // 点击添加
-    add() {
-      reqbanneradd(this.form).then((res) => {
-        if (res.data.code == 200) {
-          //添加成功
-          successAlert(res.data.msg);
-          //弹框消失
-          this.$emit("hide");
-          //数据重置
-          this.empty();
-          //重新获取list
-          this.reqList();
+    add(form) {
+      this.$refs[form].validate((valid) => {
+        if (valid) {
+          reqbanneradd(this.form).then((res) => {
+            if (res.data.code == 200) {
+              //添加成功
+              successAlert(res.data.msg);
+              //弹框消失
+              this.$emit("hide");
+              //数据重置
+              this.empty();
+              //重新获取list
+              this.reqList();
+            } else {
+              warningAlert(res.data.msg);
+            }
+          });
         } else {
-          warningAlert(res.data.msg);
+          console.log("error submit!!");
+          return false;
         }
       });
     },
@@ -125,18 +137,25 @@ export default {
       });
     },
     //点击修改
-    update() {
-      reqbanneredit(this.form).then((res) => {
-        if (res.data.code == 200) {
-          successAlert("更新成功");
-          //消失
-          this.$emit("hide");
-          // 重置
-          this.empty();
-          // 重新请求
-          this.reqList();
+    update(form) {
+      this.$refs[form].validate((valid) => {
+        if (valid) {
+          reqbanneredit(this.form).then((res) => {
+            if (res.data.code == 200) {
+              successAlert("更新成功");
+              //消失
+              this.$emit("hide");
+              // 重置
+              this.empty();
+              // 重新请求
+              this.reqList();
+            } else {
+              warningAlert(res.data.msg);
+            }
+          });
         } else {
-          warningAlert(res.data.msg);
+          console.log("error submit!!");
+          return false;
         }
       });
     },

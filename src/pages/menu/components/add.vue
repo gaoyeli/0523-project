@@ -1,12 +1,12 @@
 <template>
   <div>
-    <el-dialog :title="info.title" :visible.sync="info.isShow" @closed="close">
-      <el-form :model="form">
-        <el-form-item label="菜单名称" :label-width="width">
+    <el-dialog :title="info.title" :visible.sync="info.isShow" @closed="close('form')">
+      <el-form :model="form" :rules="rules" ref="form">
+        <el-form-item label="菜单名称" :label-width="width" prop="title">
           <el-input v-model="form.title" autocomplete="off"></el-input>
         </el-form-item>
 
-        <el-form-item label="上级菜单" :label-width="width">
+        <el-form-item label="上级菜单" :label-width="width" prop="pid">
           <el-select v-model="form.pid" placeholder="请选择活动区域" @change="changePid">
             <el-option label="顶级菜单" :value="0"></el-option>
             <!-- 少一个动态的数据 -->
@@ -19,7 +19,7 @@
           <el-radio v-model="form.type" :label="2">菜单</el-radio>
         </el-form-item>
 
-        <el-form-item label="菜单图标" :label-width="width" v-if="form.type===1">
+        <el-form-item label="菜单图标" :label-width="width" v-if="form.type===1" prop="icon">
           <el-select v-model="form.icon" placeholder="请选择目录图标">
             <el-option value="el-icon-setting">
               <i class="el-icon-setting"></i>
@@ -56,8 +56,8 @@
 
       <div slot="footer" class="dialog-footer">
         <el-button @click="cancel">取 消</el-button>
-        <el-button type="primary" @click="add" v-if="info.isAdd">添加</el-button>
-        <el-button type="primary" @click="updata" v-else>修改</el-button>
+        <el-button type="primary" @click="add('form')" v-if="info.isAdd">添加</el-button>
+        <el-button type="primary" @click="updata('form')" v-else>修改</el-button>
       </div>
     </el-dialog>
   </div>
@@ -93,6 +93,11 @@ export default {
         url: "",
         status: 1,
       },
+      rules: {
+        title: [{ required: true, message: "请输入菜单名称", trigger: "blur" }],
+        pid: [{ required: true, message: "请选择名称", trigger: "blur" }],
+        icon: [{ required: true, message: "请选择图标", trigger: "blur" }],
+      },
     };
   },
   methods: {
@@ -108,11 +113,12 @@ export default {
       this.form.type = this.form.pid == 0 ? 1 : 2;
     },
     //弹框关闭完成
-    close() {
+    close(form) {
       // 如果是编辑，取消了，就要清空
       if (!this.info.isAdd) {
         this.empty();
       }
+      this.$refs[form].resetFields();
     },
     //重置form
     empty() {
@@ -126,19 +132,24 @@ export default {
       };
     },
     //添加
-    add() {
-      // console.log(this.form);
-      reqAddMenu(this.form).then((res) => {
-        if (res.data.code == 200) {
-          //成功弹出
-          successAlert(res.data.msg);
-          // 传给父组件事件修改 isShow
-          this.$emit("hide");
-          this.empty();
-          //重新获取数据，循环使用
-          this.reqList();
-        } else {
-          warningAlert(res.data.msg);
+    add(form) {
+      this.$refs[form].validate((valid) => {
+        if (valid) {
+          reqAddMenu(this.form).then((res) => {
+            if (res.data.code == 200) {
+              //成功弹出
+              successAlert(res.data.msg);
+              // 传给父组件事件修改 isShow
+              this.$emit("hide");
+              this.empty();
+              //重新获取数据，循环使用
+              this.reqList();
+            } else {
+              warningAlert(res.data.msg);
+            }
+          });
+          console.log("error submit!!");
+          return false;
         }
       });
     },
@@ -152,15 +163,22 @@ export default {
       console.log(id);
     },
     //点击修改按钮
-    updata() {
-      reqMenuUpdate(this.form).then((res) => {
-        if (res.data.code == "200") {
-          successAlert("更新成功");
-          this.empty();
-          this.$emit("hide");
-          this.reqList();
+    updata(form) {
+      this.$refs[form].validate((valid) => {
+        if (valid) {
+          reqMenuUpdate(this.form).then((res) => {
+            if (res.data.code == "200") {
+              successAlert("更新成功");
+              this.empty();
+              this.$emit("hide");
+              this.reqList();
+            } else {
+              warningAlert(res.data.msg);
+            }
+          });
         } else {
-          warningAlert(res.data.msg);
+          console.log("error submit!!");
+          return false;
         }
       });
     },

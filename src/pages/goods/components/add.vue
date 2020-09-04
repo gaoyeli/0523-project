@@ -3,11 +3,11 @@
     <el-dialog
       :title="info.title"
       :visible.sync="info.isShow"
-      @close="close"
+      @close="close('form')"
       @opened="createEditor"
     >
-      <el-form :model="form">
-        <el-form-item label="一级分类" :label-width="width">
+      <el-form :model="form" :rules="rules" ref="form">
+        <el-form-item label="一级分类" :label-width="width" prop="first_cateid">
           <el-select v-model="form.first_cateid" placeholder="请选择活动区域" @change="changeFirstId">
             <el-option label="--请选择--" value disabled></el-option>
             <!-- 少一个动态的数据 -->
@@ -19,7 +19,7 @@
             ></el-option>
           </el-select>
         </el-form-item>
-        <el-form-item label="二级分类" :label-width="width">
+        <el-form-item label="二级分类" :label-width="width" prop="second_cateid">
           <el-select v-model="form.second_cateid" placeholder="请选择活动区域">
             <el-option label="--请选择--" value disabled></el-option>
             <!-- 少一个动态的数据 -->
@@ -32,17 +32,17 @@
           </el-select>
         </el-form-item>
 
-        <el-form-item label="商品名称" :label-width="width">
+        <el-form-item label="商品名称" :label-width="width" prop="goodsname">
           <el-input v-model="form.goodsname" autocomplete="off"></el-input>
         </el-form-item>
-        <el-form-item label="价格" :label-width="width">
+        <el-form-item label="价格" :label-width="width" prop="price">
           <el-input v-model="form.price" autocomplete="off"></el-input>
         </el-form-item>
-        <el-form-item label="市场价格" :label-width="width">
+        <el-form-item label="市场价格" :label-width="width" prop="market_price">
           <el-input v-model="form.market_price" autocomplete="off"></el-input>
         </el-form-item>
 
-        <el-form-item label="图片" :label-width="width" v-if="form.pid!=0">
+        <el-form-item label="图片" :label-width="width" v-if="form.pid!=0" prop="img">
           <!-- 原生的上传文件 -->
           <div class="upload-box">
             <h3 class="upload-add">+</h3>
@@ -91,8 +91,8 @@
 
       <div slot="footer" class="dialog-footer">
         <el-button @click="cancel">取 消</el-button>
-        <el-button type="primary" @click="add" v-if="info.isAdd">添 加</el-button>
-        <el-button type="primary" @click="update" v-else>修 改</el-button>
+        <el-button type="primary" @click="add('form')" v-if="info.isAdd">添 加</el-button>
+        <el-button type="primary" @click="update('form')" v-else>修 改</el-button>
       </div>
     </el-dialog>
   </div>
@@ -105,7 +105,7 @@ import {
   reqgoodsUpdate,
 } from "../../../utils/request";
 import { successAlert, warningAlert } from "../../../utils/alert";
-import E from "wangeditor"
+import E from "wangeditor";
 export default {
   props: ["info"],
   computed: {
@@ -143,6 +143,22 @@ export default {
         ishot: 1,
         status: 1,
       },
+      rules: {
+        first_cateid: [
+          { required: true, message: "请选择一级分类名称", trigger: "blur" },
+        ],
+        second_cateid: [
+          { required: true, message: "请选择二级分类名称", trigger: "blur" },
+        ],
+        goodsname: [
+          { required: true, message: "请输入商品名称", trigger: "blur" },
+        ],
+        price: [{ required: true, message: "请输价格", trigger: "blur" }],
+        market_price: [
+          { required: true, message: "请输入市场价格", trigger: "blur" },
+        ],
+        img: [{ required: true, message: "请选择图片", trigger: "blur" }],
+      },
     };
   },
   methods: {
@@ -177,11 +193,12 @@ export default {
       this.imgUrl = "";
     },
     //弹框关闭完成
-    close() {
+    close(form) {
       // 如果是编辑，取消了，就要清空
       if (!this.info.isAdd) {
         this.empty();
       }
+      this.$refs[form].resetFields();
     },
     //点击后一级分类找到这个分类下边的相对应的数据，赋值给二级分类
     changeFirstId() {
@@ -189,6 +206,7 @@ export default {
         (item) => item.id == this.form.first_cateid
       ).children;
       //更改了一级分类。二级分类重置
+      this.form.second_cateid = "";
     },
     //商品规格修改 拿到值赋值给attrList
     changeSpecId() {
@@ -208,21 +226,28 @@ export default {
       this.editor.txt.html(this.form.description);
     },
     // 点击添加
-    add() {
-      //取出富文本编辑器的内容，赋值给form的description
-      this.form.description = this.editor.txt.html();
-      reqgoodsAdd(this.form).then((res) => {
-        if (res.data.code == 200) {
-          //添加成功
-          successAlert(res.data.msg);
-          //弹框消失
-          this.$emit("hide");
-          //数据重置
-          this.empty();
-          //重新获取list
-          this.reqList();
+    add(form) {
+      this.$refs[form].validate((valid) => {
+        if (valid) {
+          //取出富文本编辑器的内容，赋值给form的description
+          this.form.description = this.editor.txt.html();
+          reqgoodsAdd(this.form).then((res) => {
+            if (res.data.code == 200) {
+              //添加成功
+              successAlert(res.data.msg);
+              //弹框消失
+              this.$emit("hide");
+              //数据重置
+              this.empty();
+              //重新获取list
+              this.reqList();
+            } else {
+              warningAlert(res.data.msg);
+            }
+          });
         } else {
-          warningAlert(res.data.msg);
+          console.log("error submit!!");
+          return false;
         }
       });
     },
@@ -243,22 +268,28 @@ export default {
         this.attrList = this.specList.find(
           (item) => item.id == this.form.specsid
         ).attrs;
-        
       });
     },
     //点击修改
-    update() {
-      reqgoodsUpdate(this.form).then((res) => {
-        if (res.data.code == 200) {
-          successAlert("更新成功");
-          //消失
-          this.$emit("hide");
-          // 重置
-          this.empty();
-          // 重新请求
-          this.reqList();
+    update(form) {
+      this.$refs[form].validate((valid) => {
+        if (valid) {
+          reqgoodsUpdate(this.form).then((res) => {
+            if (res.data.code == 200) {
+              successAlert("更新成功");
+              //消失
+              this.$emit("hide");
+              // 重置
+              this.empty();
+              // 重新请求
+              this.reqList();
+            } else {
+              warningAlert(res.data.msg);
+            }
+          });
         } else {
-          warningAlert(res.data.msg);
+          console.log("error submit!!");
+          return false;
         }
       });
     },

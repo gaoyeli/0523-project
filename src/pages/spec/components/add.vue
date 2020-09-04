@@ -1,8 +1,8 @@
 <template>
   <div>
-    <el-dialog :title="info.title" :visible.sync="info.isShow" @close="close">
-      <el-form :model="form">
-        <el-form-item label="规格名称" :label-width="width">
+    <el-dialog :title="info.title" :visible.sync="info.isShow" @close="close('form')">
+      <el-form :model="form" :rules="rules" ref="form">
+        <el-form-item label="规格名称" :label-width="width" prop="specsname">
           <el-input v-model="form.specsname" autocomplete="off"></el-input>
         </el-form-item>
         <!-- 渲染循环 -->
@@ -29,8 +29,8 @@
       </el-form>
       <div slot="footer" class="dialog-footer">
         <el-button @click="cancel">取 消</el-button>
-        <el-button type="primary" @click="add" v-if="info.isAdd">添 加</el-button>
-        <el-button type="primary" @click="update" v-else>修 改</el-button>
+        <el-button type="primary" @click="add('form')" v-if="info.isAdd">添 加</el-button>
+        <el-button type="primary" @click="update('form')" v-else>修 改</el-button>
       </div>
     </el-dialog>
   </div>
@@ -59,6 +59,11 @@ export default {
         specsname: "",
         attrs: "",
         status: 1,
+      },
+      rules: {
+        specsname: [
+          { required: true, message: "请输入规格名称", trigger: "blur" },
+        ],
       },
     };
   },
@@ -92,23 +97,32 @@ export default {
       this.attrArr = [{ value: "" }];
     },
     //点击添加按钮
-    add() {
-      //添加value的值
-      this.form.attrs = JSON.stringify(this.attrArr.map((item) => item.value));
-      reqspecsAdd(this.form).then((res) => {
-        if (res.data.code == 200) {
-          //添加成功
-          successAlert("添加成功");
-          //弹框消失
-          this.$emit("hide");
-          //数据重置
-          this.empty();
-          //重新获取list
-          this.reqList();
-          //从新获取分页
-          this.reqTotal()
+    add(form) {
+      this.$refs[form].validate((valid) => {
+        if (valid) {
+          //添加value的值
+          this.form.attrs = JSON.stringify(
+            this.attrArr.map((item) => item.value)
+          );
+          reqspecsAdd(this.form).then((res) => {
+            if (res.data.code == 200) {
+              //添加成功
+              successAlert("添加成功");
+              //弹框消失
+              this.$emit("hide");
+              //数据重置
+              this.empty();
+              //重新获取list
+              this.reqList();
+              //从新获取分页
+              this.reqTotal();
+            } else {
+              warningAlert(res.data.msg);
+            }
+          });
         } else {
-          warningAlert(res.data.msg);
+          console.log("error submit!!");
+          return false;
         }
       });
     },
@@ -122,24 +136,34 @@ export default {
       });
     },
     //点击修改
-    update() {
-      this.form.attrs = JSON.stringify(this.attrArr.map((item) => item.value));
-      reqspecsUpdate(this.form).then((res) => {
-        if (res.data.code == 200) {
-          successAlert("更新成功");
-          this.$emit("hide");
-          this.empty();
-          this.reqList();
+    update(form) {
+      this.$refs[form].validate((valid) => {
+        if (valid) {
+          this.form.attrs = JSON.stringify(
+            this.attrArr.map((item) => item.value)
+          );
+          reqspecsUpdate(this.form).then((res) => {
+            if (res.data.code == 200) {
+              successAlert("更新成功");
+              this.$emit("hide");
+              this.empty();
+              this.reqList();
+            } else {
+              warningAlert(res.data.msg);
+            }
+          });
         } else {
-          warningAlert(res.data.msg);
+          console.log("error submit!!");
+          return false;
         }
       });
     },
     //编辑弹框xiaoshi
-    close() {
+    close(form) {
       if (!this.info.isAdd) {
         this.empty();
       }
+      this.$refs[form].resetFields();
     },
   },
   mounted() {},

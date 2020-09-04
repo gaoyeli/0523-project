@@ -1,15 +1,15 @@
 <template>
   <div>
-    <el-dialog :title="info.title" :visible.sync="info.isShow" @close="close">
-      <el-form :model="form">
-        <el-form-item label="上级分类" :label-width="width">
+    <el-dialog :title="info.title" :visible.sync="info.isShow" @close="close('form')">
+      <el-form :model="form" :rules="rules" ref="form">
+        <el-form-item label="上级分类" :label-width="width" prop="pid">
           <el-select v-model="form.pid" placeholder="请选择活动区域">
             <el-option label="顶级分类" :value="0"></el-option>
             <!-- 少一个动态的数据 -->
             <el-option v-for="item in list" :key="item.id" :label="item.catename" :value="item.id"></el-option>
           </el-select>
         </el-form-item>
-        <el-form-item label="分类名称" :label-width="width">
+        <el-form-item label="分类名称" :label-width="width" prop="catename">
           <el-input v-model="form.catename" autocomplete="off"></el-input>
         </el-form-item>
         <el-form-item label="图片" :label-width="width" v-if="!form.pid==0">
@@ -36,9 +36,9 @@
         </el-form-item>
       </el-form>
       <div slot="footer" class="dialog-footer">
-        <el-button @click="cancel">取 消</el-button>
-        <el-button type="primary" @click="add" v-if="info.isAdd">添 加</el-button>
-        <el-button type="primary" @click="update" v-else>修 改</el-button>
+        <el-button @click="cancel('form')">取 消</el-button>
+        <el-button type="primary" @click="add('form')" v-if="info.isAdd">添 加</el-button>
+        <el-button type="primary" @click="update('form')" v-else>修 改</el-button>
       </div>
     </el-dialog>
   </div>
@@ -70,12 +70,13 @@ export default {
         img: null,
         status: 1,
       },
+      rules: {
+        pid: [{ required: true, message: "请选择分类", trigger: "blur" }],
+        catename: [{ required: true, message: "请输入名称", trigger: "blur" }],
+      },
     };
   },
   methods: {
-    ...mapActions({
-      reqList: "cate/reqListAction",
-    }),
     //取消
     cancel() {
       this.$emit("hide");
@@ -89,28 +90,38 @@ export default {
         status: 1,
       };
       this.imgUrl = "";
+      
     },
     //弹框关闭完成
-    close() {
+    close(form) {
       // 如果是编辑，取消了，就要清空
       if (!this.info.isAdd) {
         this.empty();
       }
+        this.$refs[form].resetFields();
+
     },
     // 点击添加
-    add() {
-      reqCateAdd(this.form).then((res) => {
-        if (res.data.code == 200) {
-          //添加成功
-          successAlert(res.data.msg);
-          //弹框消失
-          this.$emit("hide");
-          //数据重置
-          this.empty();
-          //重新获取list
-          this.reqList();
+    add(form) {
+      this.$refs[form].validate((valid) => {
+        if (valid) {
+          reqCateAdd(this.form).then((res) => {
+            if (res.data.code == 200) {
+              //添加成功
+              successAlert(res.data.msg);
+              //弹框消失
+              this.$emit("hide");
+              //数据重置
+              this.empty();
+              //重新获取list
+              this.reqList();
+            } else {
+              warningAlert(res.data.msg);
+            }
+          });
         } else {
-          warningAlert(res.data.msg);
+          console.log("error submit!!");
+          return false;
         }
       });
     },
@@ -125,8 +136,10 @@ export default {
       });
     },
     //点击修改
-    update() {
-      reqCateUpdate(this.form).then((res) => {
+    update(form) {
+ this.$refs[form].validate((valid) => {
+        if (valid) {
+            reqCateUpdate(this.form).then((res) => {
         if (res.data.code == 200) {
           successAlert("更新成功");
           //消失
@@ -139,6 +152,11 @@ export default {
           warningAlert(res.data.msg);
         }
       });
+        } else {
+          console.log('error submit!!');
+          return false;
+        }
+      });   
     },
 
     //原生上传文件

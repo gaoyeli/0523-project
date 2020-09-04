@@ -1,12 +1,12 @@
 <template>
   <div>
-    <el-dialog :title="info.title" :visible.sync="info.isShow" @closed="close">
-      <el-form :model="form">
-        <el-form-item label="角色名称" :label-width="width">
+    <el-dialog :title="info.title" :visible.sync="info.isShow" @closed="close('form')">
+      <el-form :model="form" :rules="rules" ref="form">
+        <el-form-item label="角色名称" :label-width="width" prop="rolename">
           <el-input v-model="form.rolename" autocomplete="off"></el-input>
         </el-form-item>
 
-        <el-form-item label="角色权限" :label-width="width">
+        <el-form-item label="角色权限" :label-width="width" prop="menus">
           <el-tree
             :data="menuList"
             show-checkbox
@@ -22,8 +22,8 @@
       </el-form>
       <div slot="footer" class="dialog-footer">
         <el-button @click="cancel">取 消</el-button>
-        <el-button type="primary" @click="add" v-if="info.isAdd">添 加</el-button>
-        <el-button type="primary" v-else @click="updata">修 改</el-button>
+        <el-button type="primary" @click="add('form')" v-if="info.isAdd">添 加</el-button>
+        <el-button type="primary" v-else @click="updata('form')">修 改</el-button>
       </div>
     </el-dialog>
   </div>
@@ -52,6 +52,13 @@ export default {
         menus: [],
         status: 1,
       },
+      //正则验证
+      rules: {
+        rolename: [
+          { required: true, message: "请输入角色名称", trigger: "blur" },
+        ],
+        menus: [{ required: true, message: "请选择角色权限", trigger: "blur" }],
+      },
     };
   },
   methods: {
@@ -62,10 +69,11 @@ export default {
       roleList: "role/reqRoleAction",
     }),
     //弹框消失
-    close() {
+    close(form) {
       if (!this.info.isShow) {
         this.empty();
       }
+      this.$refs[form].resetFields();
     },
     //点击关闭
     cancel() {
@@ -79,22 +87,41 @@ export default {
         status: 1,
       };
     },
-    add() {
-      //menus设置
-      // this.$refs.tree.getCheckedKeys() 获取树形控件上的选中的key
-      this.form.menus = JSON.stringify(this.$refs.tree.getCheckedKeys());
-      //请求数据
-      reqRoleAdd(this.form).then((res) => {
-        if (res.data.code == "200") {
-          successAlert("添加成功");
-          //取消按钮
-          this.cancel();
-          //清空
-          this.empty();
-          //重新请求
-          this.roleList();
+    add(form) {
+      // this.$refs[form].validate((valid) => {
+      //   if (valid) {
+      //     alert('submit!');
+      //   } else {
+      //     console.log('error submit!!');
+      //     return false;
+      //   }
+      // });
+
+      // resetForm(form) {
+      //   this.$refs[form].resetFields();
+      // }
+      this.$refs[form].validate((valid) => {
+        if (valid) {
+          //menus设置
+          // this.$refs.tree.getCheckedKeys() 获取树形控件上的选中的key
+          this.form.menus = JSON.stringify(this.$refs.tree.getCheckedKeys());
+          //请求数据
+          reqRoleAdd(this.form).then((res) => {
+            if (res.data.code == "200") {
+              successAlert("添加成功");
+              //取消按钮
+              this.cancel();
+              //清空
+              this.empty();
+              //重新请求
+              this.roleList();
+            } else {
+              warningAlert(res.data.msg);
+            }
+          });
         } else {
-          warningAlert(res.data.msg);
+          console.log("error submit!!");
+          return false;
         }
       });
     },
@@ -107,20 +134,27 @@ export default {
       });
     },
     //修改
-    updata() {
-      // this.$refs.tree.getCheckedKeys() 获取树形控件上的选中的key
-      this.form.menus = JSON.stringify(this.$refs.tree.getCheckedKeys());
-      reqRoleUpdate(this.form).then((res) => {
-        if (res.data.code == 200) {
-          successAlert("修改成功");
-          //弹框消失
-          this.cancel();
-          //数据重置
-          this.empty();
-          //刷新角色列表的数据
-          this.reqRoleList();
+    updata(form) {
+      this.$refs[form].validate((valid) => {
+        if (valid) {
+          // this.$refs.tree.getCheckedKeys() 获取树形控件上的选中的key
+          this.form.menus = JSON.stringify(this.$refs.tree.getCheckedKeys());
+          reqRoleUpdate(this.form).then((res) => {
+            if (res.data.code == 200) {
+              successAlert("修改成功");
+              //弹框消失
+              this.cancel();
+              //数据重置
+              this.empty();
+              //刷新角色列表的数据
+              this.reqRoleList();
+            } else {
+              warningAlert(res.data.msg);
+            }
+          });
         } else {
-          warningAlert(res.data.msg);
+          console.log("error submit!!");
+          return false;
         }
       });
     },

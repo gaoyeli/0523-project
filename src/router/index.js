@@ -19,51 +19,84 @@ const seckill = () => import("../pages/seckill/seckill")
 const spec = () => import("../pages/spec/spec")
 const home = () => import("../pages/home/home")
 
+
+//路由独享守卫判断
+function beforeEnter(url, next) {
+  store.state.user.info.menus_url.some(item => item == url) ? next() : next("/")
+}
+
 export const indexRoutes = [
   {
     path: "menu",
     component: menu,
-    name: "菜单管理"
+    name: "菜单管理",
+    beforeEnter(to, from, next) {
+      beforeEnter("/menu", next)
+    }
   },
   {
     path: "role",
     component: role,
-    name: "角色管理"
+    name: "角色管理",
+    beforeEnter(to, from, next) {
+      beforeEnter("/role", next)
+    }
   },
   {
     path: "manage",
     component: manage,
-    name: "管理员管理"
+    name: "管理员管理",
+    beforeEnter(to, from, next) {
+      beforeEnter("/manage", next)
+    }
   },
   {
     path: "classify",
     component: classify,
-    name: "商品分类"
+    name: "商品分类",
+    beforeEnter(to, from, next) {
+      beforeEnter("/classify", next)
+    }
   },
   {
     path: "spec",
     component: spec,
-    name: "商品规格"
+    name: "商品规格",
+    beforeEnter(to, from, next) {
+      beforeEnter("/spec", next)
+    }
   },
   {
     path: "goods",
     component: goods,
-    name: "商品管理"
+    name: "商品管理",
+    beforeEnter(to, from, next) {
+      beforeEnter("/goods", next)
+    }
   },
   {
     path: "banner",
     component: banner,
-    name: "轮播图管理"
+    name: "轮播图管理",
+    beforeEnter(to, from, next) {
+      beforeEnter("/banner", next)
+    }
   },
   {
     path: "member",
     component: member,
-    name: "会员管理"
+    name: "会员管理",
+    beforeEnter(to, from, next) {
+      beforeEnter("/member", next)
+    }
   },
   {
     path: "seckill",
     component: seckill,
-    name: "秒杀活动"
+    name: "秒杀活动",
+    beforeEnter(to, from, next) {
+      beforeEnter("/seckill", next)
+    }
   },
 
 ]
@@ -85,12 +118,13 @@ const router = new Router({
 
 //登录拦截
 router.beforeEach((to, from, next) => {
+  console.log(store.state.user.info);
   //登录 next
-  if (to.path == "/login") {
+  if (to.path === "/login") {
     next();
     return;
   }
-  //不是登录
+  //不是登录  判断是否登录过，登陆过，跳转，若果没有登录过，强制登录
   if (store.state.user.info.id) {
     next();
     return;
