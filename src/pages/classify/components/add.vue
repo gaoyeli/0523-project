@@ -77,6 +77,8 @@ export default {
     };
   },
   methods: {
+      ...mapActions({
+      reqList: "cate/reqListAction"}),
     //取消
     cancel() {
       this.$emit("hide");

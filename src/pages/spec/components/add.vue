@@ -11,6 +11,7 @@
           :label-width="width"
           v-for="(item,index) in attrArr"
           :key="index"
+             prop="attrs"
         >
           <el-row>
             <el-col :span="18">
@@ -47,6 +48,13 @@ export default {
   props: ["info"],
   components: {},
   data() {
+     var validatePass = (rule, value, callback) => {
+        if ( this.attrs === '') {
+          callback(new Error('请选择规格属性'));
+        } else {
+          callback();
+        }
+      };
     return {
       attrArr: [
         {
@@ -64,6 +72,10 @@ export default {
         specsname: [
           { required: true, message: "请输入规格名称", trigger: "blur" },
         ],
+         attrs:[
+          { required: true, validator: validatePass, trigger: "blur" },
+
+         ]
       },
     };
   },

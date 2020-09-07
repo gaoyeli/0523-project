@@ -56,7 +56,7 @@ export default {
   methods: {
     ...mapActions({
       reqList: "spec/reqListAction",
-      reqTotal: "spec/reqListNum",
+      reqNum: "spec/reqListNum",
       changePageAction: "spec/changePageAction",
     }),
     //修改了当前的页码
@@ -73,8 +73,9 @@ export default {
       reqspecsDel({ id: id }).then((res) => {
         if (res.data.code == 200) {
           successAlert("删除成功");
-          this.reqTotal();
+          this.reqNum();
           this.reqList();
+           this.changePageAction()
         } else {
           warningAlert(res.data.msg);
         }
@@ -83,7 +84,7 @@ export default {
   },
   mounted() {
     this.reqList();
-    this.reqTotal();
+    this.reqNum();
   },
 };
 </script>

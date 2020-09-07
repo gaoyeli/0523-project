@@ -91,8 +91,32 @@ export default {
   },
   components: {},
   data() {
+    var validatePass = (rule, value, callback) => {
+        if ( this.begintime === ''&&this.form.endtime==='') {
+          callback(new Error('请选择时间'));
+        } else {
+          callback();
+        }
+      };
+
+       var validatePass2 = (rule, value, callback) => {
+        if (this.first_cateid === '') {
+          callback(new Error('请选择一级分类'));
+        }  else {
+          callback();
+        }
+      };
+      var validatePass3 = (rule, value, callback) => {
+        if (this. second_cateid === '') {
+          callback(new Error('请选择二级分类'));
+        }  else {
+          callback();
+        }
+      };
     // 放置form 数据，填写的内容到数据库的form
     return {
+     
+
       pickerOptions: {
         shortcuts: [
           {
@@ -143,9 +167,9 @@ export default {
       },
       rules: {
         title: [{ required: true, message: "请输入活动名称", trigger: "blur" }],
-        time: [{ required: true, message: "请输入活动时间", trigger: "blur" }],
-        pp: [{ required: true, message: "请选择一级分类", trigger: "blur" }],
-         second: [{ required: true, message: "请选择二级分类", trigger: "blur" }],
+        time: [{ required: true,  validator: validatePass, trigger: "blur" }],
+        pp: [{ required: true, validator: validatePass2, trigger: "blur" }],
+         second: [{ required: true, validator: validatePass2, trigger: "blur" }],
       },
      
     };
@@ -175,7 +199,8 @@ export default {
         endtime: "",
         goodsid: "",
         status: 1,
-      };
+      }
+    this.value1=""
     },
     //弹框关闭完成
     close(form) {

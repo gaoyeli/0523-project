@@ -44,6 +44,14 @@ export default {
     }),
   },
   data() {
+     var validatePass = (rule, value, callback) => {
+        this.form.menus = JSON.stringify(this.$refs.tree.getCheckedKeys());
+        if (this.form.menus==='[]') {
+          callback(new Error('请选择权限'));
+        } else { 
+          callback();
+        }
+      };
     return {
       width: "100px",
       //后台需要的以及引入的from
@@ -52,15 +60,17 @@ export default {
         menus: [],
         status: 1,
       },
+
       //正则验证
       rules: {
         rolename: [
           { required: true, message: "请输入角色名称", trigger: "blur" },
         ],
-        menus: [{ required: true, message: "请选择角色权限", trigger: "blur" }],
+        menus: [{ required: true, validator:validatePass, trigger: "blur" }],
       },
     };
   },
+ 
   methods: {
     ...mapActions({
       //权限是菜单管理下边的数据 先访问过来
@@ -105,6 +115,7 @@ export default {
           //menus设置
           // this.$refs.tree.getCheckedKeys() 获取树形控件上的选中的key
           this.form.menus = JSON.stringify(this.$refs.tree.getCheckedKeys());
+          
           //请求数据
           reqRoleAdd(this.form).then((res) => {
             if (res.data.code == "200") {
